@@ -80,7 +80,7 @@ udp_enabled, tcp_enabled и icmp_enabled - взаимоисключающие п
 
 Необходимые для компиляции зависимости:
 ```sh
-sudo apt-get install build-essential libconfig-dev llvm clang libelf-dev 
+sudo apt-get install build-essential libconfig-dev llvm clang libelf-dev gcc-multilib libbpf-dev
 ```
 
 Для сборки
