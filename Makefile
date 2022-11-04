@@ -25,13 +25,13 @@ all: $(OBJECT_LIBBPF) obj_utils load-tool stats xdp-prog
 load-tool: $(OBJECT_LIBBPF) obj_utils
 	mkdir -p build
 	cd $(SRC) && \
-	$(CC) -Wall -lconfig -lz -I../$(HEADERS_DIR) -L../$(LIBBPF_DIR) -o ../build/$(LOADER_NAME) ../$(UTILS_DIR)/config.o ../$(UTILS_DIR)/bfp-xdp.o $(LOADER) -l:libbpf.a -lelf -lconfig 
+	$(CC) -Wall -I../$(HEADERS_DIR) -L../$(LIBBPF_DIR) -o ../build/$(LOADER_NAME) ../$(UTILS_DIR)/config.o ../$(UTILS_DIR)/bfp-xdp.o $(LOADER) -l:libbpf.a -lelf -lz -lconfig 
 	cp $(SRC)/xdp.conf build/
 	
 stats: $(OBJECT_LIBBPF) obj_utils
 	mkdir -p build
 	cd $(SRC) && \
-	$(CC) -Wall -lconfig -lz -I../$(HEADERS_DIR) -L../$(LIBBPF_DIR) -o ../build/$(STATS_NAME) ../$(UTILS_DIR)/config.o ../$(UTILS_DIR)/bfp-xdp.o $(STATS) -l:libbpf.a -lelf -lconfig \
+	$(CC) -Wall -I../$(HEADERS_DIR) -L../$(LIBBPF_DIR) -o ../build/$(STATS_NAME) ../$(UTILS_DIR)/config.o ../$(UTILS_DIR)/bfp-xdp.o $(STATS) -l:libbpf.a -lelf -lz -lconfig \
 		
 xdp-prog: $(OBJECT_LIBBPF)
 	mkdir -p build
