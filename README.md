@@ -78,6 +78,11 @@ udp_enabled, tcp_enabled и icmp_enabled - взаимоисключающие п
 ```
 ## Сборка и запуск
 
+Необходимые для компиляции зависимости:
+```sh
+sudo apt-get install build-essential libconfig-dev llvm clang libelf-dev 
+```
+
 Для сборки
 ```sh
 git clone <>
