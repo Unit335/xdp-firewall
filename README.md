@@ -85,8 +85,8 @@ sudo apt-get install build-essential libconfig-dev llvm clang libelf-dev gcc-mul
 
 Для сборки
 ```sh
-git clone <>
-cd <>
+git clone https://github.com/Unit335/xdp-firewall.git
+cd xdp-firewall
 make
 ```
 
