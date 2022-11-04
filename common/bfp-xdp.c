@@ -1,13 +1,13 @@
-#include <bpf/libbpf.h> /* bpf_get_link_xdp_id + bpf_set_link_xdp_id */
-#include <string.h>     /* strerror */
-#include <net/if.h>     /* IF_NAMESIZE */
-#include <stdlib.h>     /* exit(3) */
+#include <bpf/libbpf.h> 
+#include <string.h>     
+#include <net/if.h>     
+#include <stdlib.h>    
 #include <errno.h>
 
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
 
-#include <linux/if_link.h> /* Need XDP flags */
+#include <linux/if_link.h> 
 #include <linux/err.h>
 #include "defines.h"
 

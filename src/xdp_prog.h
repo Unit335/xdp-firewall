@@ -7,7 +7,10 @@
 #define MAX_TRACK_IPS 100000
 #define MAX_CPUS 256
 #define memcpy(dest, src, n) __builtin_memcpy((dest), (src), (n))
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define htons(x) ((__be16)___constant_swab16((x)))
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define htons(x) (x)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
 struct tcpopts

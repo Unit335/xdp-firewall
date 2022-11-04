@@ -110,7 +110,8 @@ int readcfg(struct f_config *cfg)
             cfg->filters[i].tcpopts.dport = (__u16)tcpdport;
             cfg->filters[i].tcpopts.do_dport = 1;
         }
-
+	
+	//UDP
         int udpenabled;
         if (config_setting_lookup_bool(filter, "udp_enabled", &udpenabled)) {
             cfg->filters[i].udpopts.enabled = udpenabled;

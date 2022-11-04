@@ -31,14 +31,6 @@ struct bpf_map_def SEC("maps") stats_map =
     .max_entries = 1
 };
 
-struct bpf_map_def SEC("maps") ip_blacklist_map =
-{
-    .type = BPF_MAP_TYPE_LRU_HASH,
-    .key_size = sizeof(__u32),
-    .value_size = sizeof(__u64),
-    .max_entries = MAX_TRACK_IPS
-};
-
 SEC("xdp_prog")
 int xdp_prog_main(struct xdp_md *ctx)
 {
@@ -66,31 +58,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
     __u32 key = 0;
     struct stats *stats = bpf_map_lookup_elem(&stats_map, &key);
-/*
-    __u64 now = bpf_ktime_get_ns();
-    __u64 *blocked = NULL;
 
-    blocked = bpf_map_lookup_elem(&ip_blacklist_map, &iph->saddr);
-    
-    if (blocked != NULL && *blocked > 0)
-    {
-        if (now > *blocked) {
-            bpf_map_delete_elem(&ip_blacklist_map, &iph->saddr);
-        }
-        else
-        {
-            #ifdef DOSTATSONBLOCKMAP
-            // Increase blocked stats entry.
-            if (stats)
-            {
-                stats->dropped++;
-            }
-            #endif
-            
-            return XDP_DROP;
-        }
-    }
-*/
     struct tcphdr *tcph = NULL;
     struct udphdr *udph = NULL;
     struct icmphdr *icmph = NULL;
@@ -171,9 +139,6 @@ int xdp_prog_main(struct xdp_md *ctx)
     return XDP_PASS;
 
     matched:
-            // Before dropping, update the blacklist map.
-           // bpf_map_update_elem(&ip_blacklist_map, &iph->saddr, &now, BPF_ANY);
-
             if (stats)
             {
                 stats->dropped++;

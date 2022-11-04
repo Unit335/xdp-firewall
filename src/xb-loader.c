@@ -245,7 +245,7 @@ int main(int argc, char **argv)
 	bpf_obj = load_bpf_and_xdp_attach(&cfg);
 	if (!bpf_obj) return 1;
 	printf("Loaded BPF (%s))\n", cfg.filename);
-	printf(" - XDP attached on interface: %s (ifindex:%d)\n", cfg.ifname, cfg.ifindex);
+	printf(" == XDP attached on interface: %s (ifindex:%d)\n", cfg.ifname, cfg.ifindex);
 
 	err = pin_maps_in_bpf_object(bpf_obj, cfg.ifname);
 	if (err) {
