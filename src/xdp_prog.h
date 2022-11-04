@@ -11,6 +11,7 @@
 #define htons(x) ((__be16)___constant_swab16((x)))
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #define htons(x) (x)
+#endif
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
 struct tcpopts
