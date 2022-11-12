@@ -93,45 +93,68 @@ int xdp_prog_main(struct xdp_md *ctx)
         if (!filter || filter->id < 1) {
            break;
         }
-	if (filter->srcip && iph->saddr != filter->srcip)
-	{
-		continue;
-	}
-	if (filter->dstip && iph->daddr != filter->dstip)
-	{
-		continue;
-	}
-        if (filter->tcpopts.enabled) {
+        
+        if (!filter->enabled)
+        {
+            continue;
+        }
+        
+		if (filter->srcip != 0 && iph->saddr != filter->srcip)
+		{
+			continue;
+		}
+		if (filter->dstip != 0 && iph->daddr != filter->dstip)
+		{
+			continue;
+		}
+		if ( filter->sip_start != 0 && filter->sip_end !=0 && ( ( htonl(iph->saddr) < htonl(filter->sip_start) ) || ( htonl(iph->saddr) > htonl(filter->sip_end) ) ) ) {
+			continue;
+		}
+		if ( filter->dip_start != 0 && filter->dip_end !=0 && ( ( htonl(iph->saddr) < htonl(filter->dip_start)) || ( htonl(iph->saddr) > htonl(filter->dip_end) ) ) ) {
+			continue;
+		}	
+		
+        if (filter->proto == 6) {
             if (!tcph) {
                 continue;
             }
-            if (filter->tcpopts.do_sport && htons(filter->tcpopts.sport) != tcph->source) {
+            if (filter->do_sport && htons(filter->sport) != tcph->source) {
                 continue;
             }
-            if (filter->tcpopts.do_dport && htons(filter->tcpopts.dport) != tcph->dest) {
+            if (filter->do_dport && htons(filter->dport) != tcph->dest) {
                 continue;
+            }
+            if (filter->do_sp_range && ((htons(tcph->source) < filter->sp_start) || (htons(tcph->source) > filter->sp_end))) {
+            	continue;
+            }
+            if (filter->do_dp_range && ((htons(tcph->source) < filter->dp_start) || (htons(tcph->source) > filter->dp_end))) {
+            	continue;
             }
         }
-        else if (filter->udpopts.enabled) {
+        else if (filter->proto == 17) {
             if (!udph) {
                 continue;
             }
-            if (filter->udpopts.do_sport && htons(filter->udpopts.sport) != udph->source) {
+            if (filter->do_sport && htons(filter->sport) != udph->source) {
                 continue;
             }
-            if (filter->udpopts.do_dport && htons(filter->udpopts.dport) != udph->dest) {
-
+            if (filter->do_dport && htons(filter->dport) != udph->dest) {
                 continue;
+            }
+			if ( filter->do_sp_range && ( (htons(udph->source) < filter->sp_start) || (htons(udph->source) > filter->sp_end) ) ) {
+            	continue;
+            }
+            if ( filter->do_dp_range && ( (htons(udph->source) < filter->dp_start) || (htons(udph->source) > filter->dp_end) ) ) {
+            	continue;
             }
         }
-        else if (filter->icmpopts.enabled)
+        else if (filter->proto == 1)
         {
             if (!icmph)
             {
                 continue;
             }
         }
-     
 
         goto matched;
     }

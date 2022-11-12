@@ -28,7 +28,7 @@ int xdp_link_attach(int ifindex, __u32 xdp_flags, int prog_fd)
 			err = bpf_set_link_xdp_fd(ifindex, prog_fd, old_flags);
 	}
 	if (err < 0) {
-		perror("link set xdp error\n");
+		fprintf(stderr, "Error in xdp_link_attach (%d): %s\n", -err, strerror(-err));
 		return 1;
 	}
 	return 0;
@@ -118,11 +118,6 @@ struct bpf_object *load_bpf_and_xdp_attach(struct config *cfg)
 
 	return bpf_obj;
 }
-
-#define XDP_UNKNOWN	XDP_REDIRECT + 1
-#ifndef XDP_ACTION_MAX
-#define XDP_ACTION_MAX (XDP_UNKNOWN + 1)
-#endif
 
 int open_bpf_map_file(const char *pin_dir,
 		      const char *mapname,

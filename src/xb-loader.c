@@ -158,7 +158,7 @@ void updatefilters(struct f_config *cfg, int filtersmap)
 int updateconfig(struct f_config *cfg, char *cfgfile)
 {
 	if (opencfg(cfgfile) != 0) {
-		perror("Error while opening filters config file");
+		fprintf(stderr, "Error while opening filters config xdp.conf\n");
 		return 1;
 	}
 	setcfgdefaults(cfg);
@@ -166,7 +166,7 @@ int updateconfig(struct f_config *cfg, char *cfgfile)
 		cfg->filters[i] = (struct filter){0};
 	}
 	if (readcfg(cfg) != 0) {
-		perror("Error reading filters config file\n");
+		fprintf(stderr, "Filters config invalid\n");
 		return 1;
 	}
 
@@ -210,7 +210,7 @@ int main(int argc, char **argv)
 		.ifindex = -1,
 		.do_unload = false,
 	};
-
+	printf("Started ... \n");
 	strncpy(cfg.filename, default_filename, sizeof(cfg.filename));
 	if (parse_cmdline(argc, argv, &cfg) != 0) {
 		perror("Arguments parsing error\n");
@@ -237,8 +237,9 @@ int main(int argc, char **argv)
 	}
 
 	if (cfg.do_filters_update) {
-		filters_upd(&cfg);
-		printf("Updated filters\n");
+		if ( filters_upd(&cfg) == 0 ) {
+			printf("Updated filters\n");
+		}
 		return 0;
 	}
 
