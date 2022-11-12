@@ -38,8 +38,8 @@ xb-stats отображает количество заблокированны�
 filters = (
     {
         #фильтр 1
-    	   enabled = true, 
-    	   proto = "udp",
+        enabled = true, 
+        proto = "udp",
         dport = 44934
     },
     {
