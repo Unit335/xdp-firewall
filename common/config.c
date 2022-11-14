@@ -23,10 +23,6 @@ void setcfgdefaults(struct f_config *cfg)
         cfg->filters[i].dip_start = 0;
         cfg->filters[i].dip_end = 0;
 		cfg->filters[i].proto = -1;
-		cfg->filters[i].do_sport = 0;
-		cfg->filters[i].do_dport = 0;
-		cfg->filters[i].do_sp_range = 0;
-		cfg->filters[i].do_dp_range = 0;
     }
 }
 
@@ -82,12 +78,12 @@ int readcfg(struct f_config *cfg)
         
         const char *sip;
         if (config_setting_lookup_string(filter, "srcip", &sip)) {
-            cfg->filters[i].srcip = inet_addr(sip);
+            cfg->filters[i].srcip = htonl(inet_addr(sip));
         }
         
         const char *dip;
         if (config_setting_lookup_string(filter, "dstip", &dip)) {
-            cfg->filters[i].dstip = inet_addr(dip);
+            cfg->filters[i].dstip = htonl(inet_addr(dip));
         }
 	
         //IP RANGES
@@ -98,8 +94,8 @@ int readcfg(struct f_config *cfg)
         		fprintf(stderr, "Source IP range in filter %u invalid: start > end, skipping\n", i);
         	}
         	else {
-		        cfg->filters[i].sip_start = inet_addr(sip_st);
-		        cfg->filters[i].sip_end = inet_addr(sip_ed);
+		        cfg->filters[i].sip_start = htonl(inet_addr(sip_st));
+		        cfg->filters[i].sip_end = htonl(inet_addr(sip_ed));
 		    }
         }
         
@@ -110,8 +106,8 @@ int readcfg(struct f_config *cfg)
         		fprintf(stderr, "Destination IP range in filter %u invalid: start > end, skipping\n", i);
         	}
         	else {
-		        cfg->filters[i].dip_start = inet_addr(dip_st);
-		        cfg->filters[i].dip_end = inet_addr(dip_ed);
+		        cfg->filters[i].dip_start = htonl(inet_addr(dip_st));
+		        cfg->filters[i].dip_end = htonl(inet_addr(dip_ed));
 		    }
         }
         // ==========
@@ -122,44 +118,46 @@ int readcfg(struct f_config *cfg)
             else if (strcmp(prt, "udp") == 0)	cfg->filters[i].proto = 17;
             else if (strcmp(prt, "icmp") == 0)	cfg->filters[i].proto = 1;
         }
-
-        long long tcpsport;
-        if (config_setting_lookup_int64(filter, "sport", &tcpsport)) {
-            cfg->filters[i].sport = (__u16)tcpsport;
-            cfg->filters[i].do_sport = 1;
-        }
-
-        long long tcpdport;
-        if (config_setting_lookup_int64(filter, "dport", &tcpdport)) {
-            cfg->filters[i].dport = (__u16)tcpdport;
-            cfg->filters[i].do_dport = 1;
-        }
         
         //PORT RANGES
-        long long sp_st, sp_ed;
-        if (config_setting_lookup_int64(filter, "sport_start", &sp_st) && config_setting_lookup_int64(filter, "sport_end", &sp_ed)) {
+        long long sp_st, sp_ed, tcpsport;
+        if (config_setting_lookup_int64(filter, "sport", &tcpsport)) {
+            cfg->filters[i].sp_start = (__u16)tcpsport;
+            cfg->filters[i].sp_end = (__u16)tcpsport;
+        }
+        else if (config_setting_lookup_int64(filter, "sport_start", &sp_st) && config_setting_lookup_int64(filter, "sport_end", &sp_ed)) {
         	if (sp_st > sp_ed) {
         		fprintf(stderr, "Source port range in filter %u invalid: start > end, skipping\n", i);
         	}
         	else {
 	            cfg->filters[i].sp_start = (__u16)sp_st;
 		        cfg->filters[i].sp_end = (__u16)sp_ed;
-		        cfg->filters[i].do_sp_range = 1;
         	}
         }
+		else {
+	        cfg->filters[i].sp_start = 0;
+		    cfg->filters[i].sp_end = 65535;
+		}
+		
 
-        long long dp_st, dp_ed;
-        if (config_setting_lookup_int64(filter, "dport_start", &dp_st) && config_setting_lookup_int64(filter, "dport_end", &dp_ed)) {
+        long long dp_st, dp_ed, tcpdport;
+        if (config_setting_lookup_int64(filter, "dport", &tcpdport)) {
+            cfg->filters[i].dp_start = (__u16)tcpdport;
+            cfg->filters[i].dp_end = (__u16)tcpdport;
+        }
+        else if (config_setting_lookup_int64(filter, "dport_start", &dp_st) && config_setting_lookup_int64(filter, "dport_end", &dp_ed)) {
         	if (dp_st > dp_ed) {
         		fprintf(stderr, "Source port range in filter %u invalid: start > end, skipping\n", i);
         	}
         	else {
 	            cfg->filters[i].dp_start = (__u16)dp_st;
 		        cfg->filters[i].dp_end = (__u16)dp_ed;
-		        cfg->filters[i].do_dp_range = 1;
         	}
         }
-
+        else {
+		    cfg->filters[i].dp_start = 0;
+		    cfg->filters[i].dp_end = 65535;
+        }
         //===========
 
         cfg->filters[i].id = ++filters;

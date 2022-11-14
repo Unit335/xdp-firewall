@@ -140,7 +140,7 @@ int pin_maps_in_bpf_object(struct bpf_object *bpf_obj, const char *subdir)
 	return 0;
 }
 
-void updatefilters(struct f_config *cfg, int filtersmap)
+void update_filters(struct f_config *cfg, int filtersmap)
 {
 	for (__u8 i = 0; i < MAX_FILTERS; i++) {
 		__u32 key = i;
@@ -155,7 +155,7 @@ void updatefilters(struct f_config *cfg, int filtersmap)
 	}
 }
 
-int updateconfig(struct f_config *cfg, char *cfgfile)
+int update_config(struct f_config *cfg, char *cfgfile)
 {
 	if (opencfg(cfgfile) != 0) {
 		fprintf(stderr, "Error while opening filters config xdp.conf\n");
@@ -173,7 +173,7 @@ int updateconfig(struct f_config *cfg, char *cfgfile)
 	return 0;
 }
 
-int filters_upd(struct config *cfg)
+int pinned_filters_upd(struct config *cfg)
 {
 	struct bpf_map_info info = {0};
 	char pin_dir[PATH_MAX];
@@ -195,8 +195,8 @@ int filters_upd(struct config *cfg)
 
 	struct f_config filters_cfg = {0};
 	setcfgdefaults(&filters_cfg);
-	updateconfig(&filters_cfg, "xdp.conf");
-	updatefilters(&filters_cfg, filters_map_fd);
+	update_config(&filters_cfg, "xdp.conf");
+	update_filters(&filters_cfg, filters_map_fd);
 
 	return 0;
 }
@@ -237,7 +237,7 @@ int main(int argc, char **argv)
 	}
 
 	if (cfg.do_filters_update) {
-		if ( filters_upd(&cfg) == 0 ) {
+		if ( pinned_filters_upd(&cfg) == 0 ) {
 			printf("Updated filters\n");
 		}
 		return 0;
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "ERR: pinning maps\n");
 		return err;
 	}
-	filters_upd(&cfg);
+	pinned_filters_upd(&cfg);
 
 	return 0;
 }
