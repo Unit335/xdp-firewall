@@ -23,18 +23,18 @@ struct filter
 
     __u32 srcip;
     __u32 dstip;
-    
-	__u32 sip_start;
-	__u32 sip_end; 
-	__u32 dip_start;
-	__u32 dip_end; 
-    
+
+    __u32 sip_start;
+    __u32 sip_end; 
+    __u32 dip_start;
+    __u32 dip_end; 
+
     short int proto;
 
     __u16 sp_start, sp_end;
     __u16 dp_start, dp_end;
-    
-    
+
+
 };
 struct stats
 {

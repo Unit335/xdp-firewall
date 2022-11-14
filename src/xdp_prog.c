@@ -54,9 +54,9 @@ int xdp_prog_main(struct xdp_md *ctx)
 {
 
     void *data_end = (void *)(long)ctx->data_end;
-    void *data = (void *)(long)ctx->data;
+    void *data_start = (void *)(long)ctx->data;
 
-    struct ethhdr *eth = data;
+    struct ethhdr *eth = data_start;
     if (eth + 1 > (struct ethhdr *)data_end) {
         return XDP_PASS;
     }
@@ -65,42 +65,42 @@ int xdp_prog_main(struct xdp_md *ctx)
         return XDP_PASS;
     }
 
-    struct iphdr *iph = NULL;
-    iph = (data + sizeof(struct ethhdr));
+    struct iphdr *ip_header = NULL;
+    ip_header = (data_start + sizeof(struct ethhdr));
 
-    if (unlikely(iph + 1 > (struct iphdr *)data_end)) {
+    if (unlikely(ip_header + 1 > (struct iphdr *)data_end)) {
         return XDP_PASS;
     }
 
-    if ((iph && iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP)) {
+    if ((ip_header && ip_header->protocol != IPPROTO_UDP && ip_header->protocol != IPPROTO_TCP && ip_header->protocol != IPPROTO_ICMP)) {
         return XDP_PASS;
     }
     __u32 key = 0;
     struct stats *stats = bpf_map_lookup_elem(&stats_map, &key);
 
-    struct tcphdr *tcph = NULL;
-    struct udphdr *udph = NULL;
-    struct icmphdr *icmph = NULL;
+    struct tcphdr *tcp_header = NULL;
+    struct udphdr *udp_header = NULL;
+    struct icmphdr *icmp_header = NULL;
 
-    switch (iph->protocol) {
+    switch (ip_header->protocol) {
         case IPPROTO_TCP:
-            tcph = ((void*)iph + (iph->ihl * 4));
-            if (tcph + 1 > (struct tcphdr *)data_end) {
-                tcph = NULL;
+            tcp_header = ((void*)ip_header + (ip_header->ihl * 4));
+            if (tcp_header + 1 > (struct tcphdr *)data_end) {
+                tcp_header = NULL;
             }
             break;
 
         case IPPROTO_UDP:
-            udph = ((void*)iph + (iph->ihl * 4));
-            if (udph + 1 > (struct udphdr *)data_end) {
-                udph = NULL;
+            udp_header = ((void*)ip_header + (ip_header->ihl * 4));
+            if (udp_header + 1 > (struct udphdr *)data_end) {
+                udp_header = NULL;
             }
             break;
 
         case IPPROTO_ICMP:
-            icmph = ((void*)iph + (iph->ihl * 4));
-            if (icmph + 1 > (struct icmphdr *)data_end) {
-                icmph = NULL;
+            icmp_header = ((void*)ip_header + (ip_header->ihl * 4));
+            if (icmp_header + 1 > (struct icmphdr *)data_end) {
+                icmp_header = NULL;
             }
             break;
     }
@@ -116,39 +116,39 @@ int xdp_prog_main(struct xdp_md *ctx)
             continue;
         }
 
-        if ( ip_check(filter->srcip, htonl(iph->saddr), filter->sip_start, filter->sip_end) ) {
+        if (ip_check(filter->srcip, htonl(ip_header->saddr), filter->sip_start, filter->sip_end)) {
             continue;
         }
 
-        if ( ip_check(filter->dstip, htonl(iph->daddr), filter->dip_start, filter->dip_end) ) {
+        if (ip_check(filter->dstip, htonl(ip_header->daddr), filter->dip_start, filter->dip_end)) {
             continue;
         }
         
         if (filter->proto == 6) //TCP
         {
-            if (!tcph) {
+            if (!tcp_header) {
                 continue;
             }
-            if (range_check(htons(tcph->source), filter->sp_start, filter->sp_end)) {
+            if (range_check(htons(tcp_header->source), filter->sp_start, filter->sp_end)) {
                 continue;
             }
-            if (range_check(htons(tcph->dest), filter->dp_start, filter->dp_end)) {
+            if (range_check(htons(tcp_header->dest), filter->dp_start, filter->dp_end)) {
                 continue;
             }
         }
         else if (filter->proto == 17) { //UDP
-            if (!udph) {
+            if (!udp_header) {
                 continue;
             }
-            if (range_check(htons(udph->source), filter->sp_start, filter->sp_end)) {
+            if (range_check(htons(udp_header->source), filter->sp_start, filter->sp_end)) {
                 continue;
             }
-            if (range_check(htons(udph->dest), filter->dp_start, filter->dp_end)) {
+            if (range_check(htons(udp_header->dest), filter->dp_start, filter->dp_end)) {
                 continue;
             }
         }
         else if (filter->proto == 1) { //ICMP
-            if (!icmph) {
+            if (!icmp_header) {
                 continue;
             }
         }
