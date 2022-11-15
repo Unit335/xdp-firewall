@@ -10,7 +10,7 @@
 
 FILE *file;
 
-void setcfgdefaults(struct f_config *cfg)
+void set_config_defaults(struct f_config *cfg)
 {
     cfg->updatetime = 0;
     for (__u16 i = 0; i < MAX_FILTERS; i++) { 
@@ -27,7 +27,7 @@ void setcfgdefaults(struct f_config *cfg)
 }
 
 
-int opencfg(const char *filename) {
+int open_config(const char *filename) {
     if (file != NULL) {
         fclose(file);
 
@@ -40,7 +40,52 @@ int opencfg(const char *filename) {
     return 0;
 }
 
-int readcfg(struct f_config *cfg)
+int ip_read(config_setting_t *filter, char field[16], char st_field[16], char ed_field[16], __u32 *start, __u32 *end) 
+{
+    const char *st, *ed, *def_ip;
+    if (config_setting_lookup_string(filter, field, &def_ip)) {
+        *start = htonl(inet_addr(def_ip));
+        *end = htonl(inet_addr(def_ip));
+        return 0;
+    }    
+    else if (config_setting_lookup_string(filter, st_field, &st) && config_setting_lookup_string(filter, ed_field, &ed)) {
+        if (htonl(inet_addr(st)) > htonl(inet_addr(ed))) {
+            fprintf(stderr, "IP range (%s -> %s) in filter invalid: start > end, skipping\n", st, ed);
+        }
+        else {
+            *start = htonl(inet_addr(st));
+            *end = htonl(inet_addr(ed));
+            return 0;
+        }
+    }
+    *start = 0;
+    *end = 4294967295; //=UINT_MAX
+    return 1;
+}
+
+int port_read(config_setting_t *filter, char field[16], char st_field[16], char ed_field[16], __u16 *start, __u16 *end) {
+    long long st, ed, port;
+    if (config_setting_lookup_int64(filter, field, &port)) {
+        *start = (__u16)port;
+        *end = (__u16)port;
+        return 0;
+    }
+    else if (config_setting_lookup_int64(filter, st_field, &st) && config_setting_lookup_int64(filter, ed_field, &ed)) {
+        if (st > ed) {
+            fprintf(stderr, "Port range (%hu -> %hu) in filter invalid: start > end, skipping\n", (__u16)st, (__u16)ed);
+        }
+        else {
+            *start = (__u16)st;
+            *end = (__u16)ed;
+            return 0;
+        }
+    }
+    *start = 0;
+    *end = 65535;
+    return 1;
+}
+
+int read_config(struct f_config *cfg)
 {
     if (file == NULL) {
         return -1;
@@ -75,89 +120,28 @@ int readcfg(struct f_config *cfg)
         }
 
         cfg->filters[i].enabled = enabled;
-        
-        const char *sip;
-        if (config_setting_lookup_string(filter, "srcip", &sip)) {
-            cfg->filters[i].srcip = htonl(inet_addr(sip));
-        }
-        
-        const char *dip;
-        if (config_setting_lookup_string(filter, "dstip", &dip)) {
-            cfg->filters[i].dstip = htonl(inet_addr(dip));
-        }
 	
         //IP RANGES
-        const char *sip_st;
-        const char *sip_ed;
-        if (config_setting_lookup_string(filter, "sip_start", &sip_st) && config_setting_lookup_string(filter, "sip_end", &sip_ed)) {
-            if (htonl(inet_addr(sip_st)) > htonl(inet_addr(sip_ed))) {
-        		fprintf(stderr, "Source IP range in filter %u invalid: start > end, skipping\n", i);
-        	}
-        	else {
-		        cfg->filters[i].sip_start = htonl(inet_addr(sip_st));
-		        cfg->filters[i].sip_end = htonl(inet_addr(sip_ed));
-		    }
-        }
+        ip_read(filter, "srcip", "sip_start", "sip_end", &(cfg->filters[i].sip_start), &(cfg->filters[i].sip_end));
         
-        const char *dip_st;
-        const char *dip_ed;
-        if (config_setting_lookup_string(filter, "dip_start", &dip_st) && config_setting_lookup_string(filter, "dip_end", &dip_ed)) {
-            if (htonl(inet_addr(dip_st)) > htonl(inet_addr(dip_ed))) {
-        		fprintf(stderr, "Destination IP range in filter %u invalid: start > end, skipping\n", i);
-        	}
-        	else {
-		        cfg->filters[i].dip_start = htonl(inet_addr(dip_st));
-		        cfg->filters[i].dip_end = htonl(inet_addr(dip_ed));
-		    }
-        }
+
+        ip_read(filter, "dstip", "dip_start", "dip_end", &(cfg->filters[i].dip_start), &(cfg->filters[i].dip_end));
+
         // ==========
 
-        const char *prt;
-        if (config_setting_lookup_string(filter, "proto", &prt)) {
-            if (strcmp(prt, "tcp") == 0)	cfg->filters[i].proto = 6;
-            else if (strcmp(prt, "udp") == 0)	cfg->filters[i].proto = 17;
-            else if (strcmp(prt, "icmp") == 0)	cfg->filters[i].proto = 1;
+        const char *protocol;
+        if (config_setting_lookup_string(filter, "proto", &protocol)) {
+            if (strcmp(protocol, "tcp") == 0)	cfg->filters[i].proto = 6;
+            else if (strcmp(protocol, "udp") == 0)	cfg->filters[i].proto = 17;
+            else if (strcmp(protocol, "icmp") == 0)	cfg->filters[i].proto = 1;
         }
         
         //PORT RANGES
-        long long sp_st, sp_ed, tcpsport;
-        if (config_setting_lookup_int64(filter, "sport", &tcpsport)) {
-            cfg->filters[i].sp_start = (__u16)tcpsport;
-            cfg->filters[i].sp_end = (__u16)tcpsport;
-        }
-        else if (config_setting_lookup_int64(filter, "sport_start", &sp_st) && config_setting_lookup_int64(filter, "sport_end", &sp_ed)) {
-        	if (sp_st > sp_ed) {
-        		fprintf(stderr, "Source port range in filter %u invalid: start > end, skipping\n", i);
-        	}
-        	else {
-	            cfg->filters[i].sp_start = (__u16)sp_st;
-		        cfg->filters[i].sp_end = (__u16)sp_ed;
-        	}
-        }
-		else {
-	        cfg->filters[i].sp_start = 0;
-		    cfg->filters[i].sp_end = 65535;
-		}
-		
 
-        long long dp_st, dp_ed, tcpdport;
-        if (config_setting_lookup_int64(filter, "dport", &tcpdport)) {
-            cfg->filters[i].dp_start = (__u16)tcpdport;
-            cfg->filters[i].dp_end = (__u16)tcpdport;
-        }
-        else if (config_setting_lookup_int64(filter, "dport_start", &dp_st) && config_setting_lookup_int64(filter, "dport_end", &dp_ed)) {
-        	if (dp_st > dp_ed) {
-        		fprintf(stderr, "Source port range in filter %u invalid: start > end, skipping\n", i);
-        	}
-        	else {
-	            cfg->filters[i].dp_start = (__u16)dp_st;
-		        cfg->filters[i].dp_end = (__u16)dp_ed;
-        	}
-        }
-        else {
-		    cfg->filters[i].dp_start = 0;
-		    cfg->filters[i].dp_end = 65535;
-        }
+        port_read(filter, "sport", "sport_start", "sport_end", &(cfg->filters[i].sp_start), &(cfg->filters[i].sp_end));
+
+        port_read(filter, "dport", "dport_start", "dport_end", &(cfg->filters[i].dp_start), &(cfg->filters[i].dp_end));
+
         //===========
 
         cfg->filters[i].id = ++filters;

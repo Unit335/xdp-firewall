@@ -157,15 +157,15 @@ void update_filters(struct f_config *cfg, int filtersmap)
 
 int update_config(struct f_config *cfg, char *cfgfile)
 {
-	if (opencfg(cfgfile) != 0) {
+	if (open_config(cfgfile) != 0) {
 		fprintf(stderr, "Error while opening filters config xdp.conf\n");
 		return 1;
 	}
-	setcfgdefaults(cfg);
+	set_config_defaults(cfg);
 	for (__u16 i = 0; i < MAX_FILTERS; i++) {
 		cfg->filters[i] = (struct filter){0};
 	}
-	if (readcfg(cfg) != 0) {
+	if (read_config(cfg) != 0) {
 		fprintf(stderr, "Filters config invalid\n");
 		return 1;
 	}
@@ -194,7 +194,7 @@ int pinned_filters_upd(struct config *cfg)
 	}
 
 	struct f_config filters_cfg = {0};
-	setcfgdefaults(&filters_cfg);
+	set_config_defaults(&filters_cfg);
 	update_config(&filters_cfg, "xdp.conf");
 	update_filters(&filters_cfg, filters_map_fd);
 

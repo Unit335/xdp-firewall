@@ -42,6 +42,6 @@ struct f_config
     struct filter filters[MAX_FILTERS];
 };
 
-void setcfgdefaults(struct f_config *cfg);
-int opencfg(const char *filename);
-int readcfg(struct f_config *cfg);
+void set_config_defaults(struct f_config *cfg);
+int open_config(const char *filename);
+int read_config(struct f_config *cfg);

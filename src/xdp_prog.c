@@ -116,14 +116,13 @@ int xdp_prog_main(struct xdp_md *ctx)
             continue;
         }
 
-        if (ip_check(filter->srcip, htonl(ip_header->saddr), filter->sip_start, filter->sip_end)) {
+        if (range_check(htonl(ip_header->saddr), filter->sip_start, filter->sip_end)) {
             continue;
         }
-
         if (ip_check(filter->dstip, htonl(ip_header->daddr), filter->dip_start, filter->dip_end)) {
             continue;
         }
-        
+
         if (filter->proto == 6) //TCP
         {
             if (!tcp_header) {
