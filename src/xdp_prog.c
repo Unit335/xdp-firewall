@@ -38,17 +38,6 @@ static __always_inline int range_check(__u32 var, __u32 start, __u32 end) {
     return 0;
 }
 
-static __always_inline int ip_check(__u32 ip, __u32 packet_ip, __u32 start, __u32 end) {
-    if (ip != 0 && packet_ip != ip) {
-        return 1;
-    }
-    if (start != 0 && end != 0 && range_check(packet_ip, start, end)) {
-        return 1;
-    }
-    return 0;
-}
-
-
 SEC("xdp_prog")
 int xdp_prog_main(struct xdp_md *ctx)
 {
@@ -119,7 +108,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         if (range_check(htonl(ip_header->saddr), filter->sip_start, filter->sip_end)) {
             continue;
         }
-        if (ip_check(filter->dstip, htonl(ip_header->daddr), filter->dip_start, filter->dip_end)) {
+        if (range_check(htonl(ip_header->daddr), filter->dip_start, filter->dip_end)) {
             continue;
         }
 

@@ -9,6 +9,7 @@
 #include "config.h"
 
 FILE *file;
+#define FIELD_LENGTH 16
 
 void set_config_defaults(struct f_config *cfg)
 {
@@ -16,8 +17,6 @@ void set_config_defaults(struct f_config *cfg)
     for (__u16 i = 0; i < MAX_FILTERS; i++) { 
         cfg->filters[i].id = 0;
         cfg->filters[i].enabled = 0;
-        cfg->filters[i].srcip = 0;
-        cfg->filters[i].dstip = 0;
         cfg->filters[i].sip_start = 0;
         cfg->filters[i].sip_end = 0;
         cfg->filters[i].dip_start = 0;
@@ -40,7 +39,8 @@ int open_config(const char *filename) {
     return 0;
 }
 
-int ip_read(config_setting_t *filter, char field[16], char st_field[16], char ed_field[16], __u32 *start, __u32 *end) 
+int ip_read(config_setting_t *filter, char field[FIELD_LENGTH], char st_field[FIELD_LENGTH], 
+                                                        char ed_field[FIELD_LENGTH], __u32 *start, __u32 *end) 
 {
     const char *st, *ed, *def_ip;
     if (config_setting_lookup_string(filter, field, &def_ip)) {
@@ -63,7 +63,8 @@ int ip_read(config_setting_t *filter, char field[16], char st_field[16], char ed
     return 1;
 }
 
-int port_read(config_setting_t *filter, char field[16], char st_field[16], char ed_field[16], __u16 *start, __u16 *end) {
+int port_read(config_setting_t *filter, char field[FIELD_LENGTH], char st_field[FIELD_LENGTH], 
+                                                        char ed_field[FIELD_LENGTH], __u16 *start, __u16 *end) {
     long long st, ed, port;
     if (config_setting_lookup_int64(filter, field, &port)) {
         *start = (__u16)port;
@@ -121,13 +122,9 @@ int read_config(struct f_config *cfg)
 
         cfg->filters[i].enabled = enabled;
 	
-        //IP RANGES
         ip_read(filter, "srcip", "sip_start", "sip_end", &(cfg->filters[i].sip_start), &(cfg->filters[i].sip_end));
         
-
         ip_read(filter, "dstip", "dip_start", "dip_end", &(cfg->filters[i].dip_start), &(cfg->filters[i].dip_end));
-
-        // ==========
 
         const char *protocol;
         if (config_setting_lookup_string(filter, "proto", &protocol)) {
@@ -136,13 +133,9 @@ int read_config(struct f_config *cfg)
             else if (strcmp(protocol, "icmp") == 0)	cfg->filters[i].proto = 1;
         }
         
-        //PORT RANGES
-
         port_read(filter, "sport", "sport_start", "sport_end", &(cfg->filters[i].sp_start), &(cfg->filters[i].sp_end));
 
         port_read(filter, "dport", "dport_start", "dport_end", &(cfg->filters[i].dp_start), &(cfg->filters[i].dp_end));
-
-        //===========
 
         cfg->filters[i].id = ++filters;
     }

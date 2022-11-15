@@ -21,9 +21,6 @@ struct filter
 
     unsigned int enabled : 1;
 
-    __u32 srcip;
-    __u32 dstip;
-
     __u32 sip_start;
     __u32 sip_end; 
     __u32 dip_start;
